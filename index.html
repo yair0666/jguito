@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jueguito</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background-color: #c66eec;
+        }
+
+        #game-container {
+            position: relative;
+            width: 600px;
+            height: 600px;
+            margin: 50px auto;
+            background-color: #ddd;
+            border: 1px solid #e49696;
+            background-image: linear-gradient(to right, #ccc 1px, transparent 1px),
+                              linear-gradient(to bottom, #ccc 1px, transparent 1px);
+            background-size: 50px 50px;
+        }
+
+        #snake, #food, .snake-tail {
+            position: absolute;
+            width: 50px;
+            height: 50px;
+        }
+
+        #snake {
+            background-image: url('https://i.gifer.com/origin/c1/c1cca783c231e1f294f9cabf542460c2_w200.gif');
+            background-size: cover;
+        }
+
+        .snake-tail {
+            background-color: rgb(236, 89, 150); /* Color de la cola de la serpiente */
+        }
+
+        #food {
+            background-image: url('https://static.vecteezy.com/system/resources/previews/019/607/050/original/strawberry-graphic-clipart-design-free-png.png');
+            background-size: cover;
+        }
+
+        #score {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            font-size: 20px;
+            color: #fff;
+        }
+
+        #welcome-popup {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: #fff;
+            padding: 20px;
+            border: 2px solid #e49696;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+            text-align: center;
+        }
+
+        #start-button {
+            background-color: #e49696;
+            color: #fff;
+            border: none;
+            padding: 10px 20px;
+            font-size: 18px;
+            cursor: pointer;
+            border-radius: 5px;
+            outline: none;
+        }
+    </style>
+</head>
+<body>
+    <div id="welcome-popup">
+        <h2>Dairita, bienvenida a tu juego</h2>
+        <button id="start-button">¡Jugar!</button>
+    </div>
+
+    <div id="game-container" style="display: none;">
+        <div id="snake"></div>
+        <div id="food"></div>
+    </div>
+
+    <div id="score">Score: <span id="score-value">0</span></div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const gameContainer = document.getElementById('game-container');
+            const snake = document.getElementById('snake');
+            const food = document.getElementById('food');
+            const scoreValue = document.getElementById('score-value');
+            const welcomePopup = document.getElementById('welcome-popup');
+            const startButton = document.getElementById('start-button');
+
+            let snakeX = 0;
+            let snakeY = 0;
+            let foodX = 0;
+            let foodY = 0;
+            let snakeSpeed = 0.5; // Reduce snake speed
+            let directionX = snakeSpeed;
+            let directionY = 0;
+            let snakeBody = [];
+            let intervalId;
+            let score = 0;
+            let isGameOver = false;
+
+            function resetGame() {
+                clearInterval(intervalId);
+                snakeX = 0;
+                snakeY = 0;
+                directionX = snakeSpeed;
+                directionY = 0;
+                snakeBody = [];
+                snake.style.left = '0px';
+                snake.style.top = '0px';
+                gameContainer.querySelectorAll('.snake-tail').forEach(segment => segment.remove());
+                generateFood();
+                intervalId = setInterval(moveSnake, 100);
+                score = 0;
+                scoreValue.textContent = score;
+                isGameOver = false;
+            }
+
+            function generateFood() {
+                foodX = Math.floor(Math.random() * (gameContainer.offsetWidth / 40)) * 40;
+                foodY = Math.floor(Math.random() * (gameContainer.offsetHeight / 40)) * 40;
+                food.style.left = `${foodX}px`;
+                food.style.top = `${foodY}px`;
+            }
+
+            function moveSnake() {
+                if (isGameOver) return;
+
+                snakeX += directionX * 40;
+                snakeY += directionY * 40;
+                
+                // Check if snake collides with itself
+                for (let i = 0; i < snakeBody.length; i++) {
+                    const segment = snakeBody[i];
+                    if (segment[0] === snakeX && segment[1] === snakeY) {
+                        gameOver();
+                        return;
+                    }
+                }
+                
+                if (snakeX >= gameContainer.offsetWidth || snakeX < 0 || snakeY >= gameContainer.offsetHeight || snakeY < 0) {
+                    gameOver();
+                    return;
+                }
+                snake.style.left = `${snakeX}px`;
+                snake.style.top = `${snakeY}px`;
+
+                if (snakeX === foodX && snakeY === foodY) {
+                    // Snake eats the food
+                    generateFood();
+                    score++;
+                    scoreValue.textContent = score;
+
+                    const newSegment = document.createElement('div');
+                    newSegment.className = 'snake-tail';
+                    newSegment.style.left = `${snakeX}px`;
+                    newSegment.style.top = `${snakeY}px`;
+                    gameContainer.appendChild(newSegment);
+                    snakeBody.push([snakeX, snakeY]);
+                }
+
+                // Move snake body
+                for (let i = snakeBody.length - 1; i > 0; i--) {
+                    snakeBody[i] = [...snakeBody[i - 1]];
+                    const segment = gameContainer.querySelectorAll('.snake-tail')[i - 1];
+                    segment.style.left = `${snakeBody[i][0]}px`;
+                    segment.style.top = `${snakeBody[i][1]}px`;
+                }
+
+                if (snakeBody.length > 0) {
+                    snakeBody[0] = [snakeX, snakeY];
+                }
+            }
+
+            function gameOver() {
+                isGameOver = true;
+                clearInterval(intervalId);
+                alert('Ay preciosota, ya perdistee:( Puntuación: ' + score);
+                resetGame();
+            }
+
+            startButton.addEventListener('click', function() {
+                welcomePopup.style.display = 'none';
+                gameContainer.style.display = 'block';
+                resetGame();
+            });
+
+            document.addEventListener('keydown', function (e) {
+                switch (e.code) {
+                    case 'ArrowUp':
+                        if (directionY !== snakeSpeed) {
+                            directionX = 0;
+                            directionY = -snakeSpeed;
+                        }
+                        break;
+                    case 'ArrowDown':
+                        if (directionY !== -snakeSpeed) {
+                            directionX = 0;
+                            directionY = snakeSpeed;
+                        }
+                        break;
+                    case 'ArrowLeft':
+                        if (directionX !== snakeSpeed) {
+                            directionX = -snakeSpeed;
+                            directionY = 0;
+                        }
+                        break;
+                    case 'ArrowRight':
+                        if (directionX !== -snakeSpeed) {
+                            directionX = snakeSpeed;
+                            directionY = 0;
+                        }
+                        break;
+                }
+            });
+        });
+    </script>
+</body>
+</html>
+
