@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Jueguito</title>
+    <title>Juego de la Serpiente</title>
     <style>
         body {
             margin: 0;
@@ -14,19 +14,20 @@
 
         #game-container {
             position: relative;
-            width: 100vw;
-            height: 100vh;
+            width: 600px;
+            height: 600px;
+            margin: 50px auto;
             background-color: #ddd;
             border: 1px solid #e49696;
             background-image: linear-gradient(to right, #ccc 1px, transparent 1px),
                               linear-gradient(to bottom, #ccc 1px, transparent 1px);
-            background-size: 10vw 10vh;
+            background-size: 50px 50px;
         }
 
         #snake, #food, .snake-tail {
             position: absolute;
-            width: 10vw;
-            height: 10vh;
+            width: 50px;
+            height: 50px;
         }
 
         #snake {
@@ -47,47 +48,50 @@
             position: absolute;
             top: 10px;
             right: 10px;
-            font-size: 5vw;
+            font-size: 20px;
             color: #fff;
         }
 
-        #welcome-popup {
-            position: fixed;
-            top: 50%;
+        #controls {
+            position: absolute;
+            bottom: 20px;
             left: 50%;
-            transform: translate(-50%, -50%);
-            background-color: #fff;
-            padding: 5vw;
-            border: 1vw solid #e49696;
-            border-radius: 5vw;
-            box-shadow: 0 0 2vw rgba(0, 0, 0, 0.3);
-            text-align: center;
+            transform: translateX(-50%);
+            display: flex;
+            justify-content: space-between;
+            width: 150px;
         }
 
-        #start-button {
-            background-color: #e49696;
-            color: #fff;
+        .arrow-button {
+            width: 40px;
+            height: 40px;
+            background-color: #fff;
             border: none;
-            padding: 2vw 4vw;
-            font-size: 5vw;
+            border-radius: 5px;
             cursor: pointer;
-            border-radius: 1vw;
-            outline: none;
         }
     </style>
 </head>
 <body>
-    <div id="welcome-popup">
+    <div id="welcome-popup" style="text-align: center; display: block; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);">
         <h2>Dairita, bienvenida a tu juego</h2>
-        <button id="start-button">¡Jugar!</button>
+        <button id="start-button" style="padding: 10px 20px; font-size: 16px; background-color: #4CAF50; color: white; border: none; border-radius: 5px; cursor: pointer;">¡Jugar!</button>
     </div>
-
+    
     <div id="game-container" style="display: none;">
         <div id="snake"></div>
         <div id="food"></div>
     </div>
+    <div id="score">Puntuación: <span id="score-value">0</span></div>
 
-    <div id="score">Score: <span id="score-value">0</span></div>
+    <div id="controls">
+        <button class="arrow-button" id="up-button">&#8593;</button>
+        <div>
+            <button class="arrow-button" id="left-button">&#8592;</button>
+            <button class="arrow-button" id="down-button">&#8595;</button>
+            <button class="arrow-button" id="right-button">&#8594;</button>
+        </div>
+    </div>
 
     <script>
         document.addEventListener('DOMContentLoaded', function () {
@@ -128,8 +132,8 @@
             }
 
             function generateFood() {
-                foodX = Math.floor(Math.random() * (gameContainer.offsetWidth / 10)) * 10;
-                foodY = Math.floor(Math.random() * (gameContainer.offsetHeight / 10)) * 10;
+                foodX = Math.floor(Math.random() * (gameContainer.offsetWidth / 40)) * 40;
+                foodY = Math.floor(Math.random() * (gameContainer.offsetHeight / 40)) * 40;
                 food.style.left = `${foodX}px`;
                 food.style.top = `${foodY}px`;
             }
@@ -137,8 +141,8 @@
             function moveSnake() {
                 if (isGameOver) return;
 
-                snakeX += directionX * 10;
-                snakeY += directionY * 10;
+                snakeX += directionX * 40;
+                snakeY += directionY * 40;
                 
                 // Check if snake collides with itself
                 for (let i = 0; i < snakeBody.length; i++) {
@@ -170,8 +174,8 @@
                     snakeBody.push([snakeX, snakeY]);
                 }
 
-                // Move snake body
-                for (let i = snakeBody.length - 1; i > 0; i--) {
+                               // Move snake body
+                               for (let i = snakeBody.length - 1; i > 0; i--) {
                     snakeBody[i] = [...snakeBody[i - 1]];
                     const segment = gameContainer.querySelectorAll('.snake-tail')[i - 1];
                     segment.style.left = `${snakeBody[i][0]}px`;
@@ -186,52 +190,78 @@
             function gameOver() {
                 isGameOver = true;
                 clearInterval(intervalId);
-                alert('Ay preciosota, ya perdiste :( Puntuación: ' + score);
+                alert('¡Ay preciosota, ya perdiste! Puntuación: ' + score);
                 resetGame();
             }
 
-            startButton.addEventListener('click', function() {
-                welcomePopup.style.display = 'none';
-                gameContainer.style.display = 'block';
-                resetGame();
-            });
-
-            gameContainer.addEventListener('touchstart', function(event) {
-                const touchX = event.touches[0].clientX;
-                const touchY = event.touches[0].clientY;
-                const snakeRect = snake.getBoundingClientRect();
-                
-                const dx = touchX - snakeRect.left;
-                const dy = touchY - snakeRect.top;
-                
-                if (Math.abs(dx) > Math.abs(dy)) {
-                    if (dx > 0) {
-                        if (directionX !== -snakeSpeed) {
-                            directionX = snakeSpeed;
-                            directionY = 0;
-                        }
-                    } else {
-                        if (directionX !== snakeSpeed) {
-                            directionX = -snakeSpeed;
-                            directionY = 0;
-                        }
-                    }
-                } else {
-                    if (dy > 0) {
-                        if (directionY !== -snakeSpeed) {
-                            directionX = 0;
-                            directionY = snakeSpeed;
-                        }
-                    } else {
+            document.addEventListener('keydown', function (e) {
+                switch (e.code) {
+                    case 'ArrowUp':
                         if (directionY !== snakeSpeed) {
                             directionX = 0;
                             directionY = -snakeSpeed;
                         }
-                    }
+                        break;
+                    case 'ArrowDown':
+                        if (directionY !== -snakeSpeed) {
+                            directionX = 0;
+                            directionY = snakeSpeed;
+                        }
+                        break;
+                    case 'ArrowLeft':
+                        if (directionX !== snakeSpeed) {
+                            directionX = -snakeSpeed;
+                            directionY = 0;
+                        }
+                        break;
+                    case 'ArrowRight':
+                        if (directionX !== -snakeSpeed) {
+                            directionX = snakeSpeed;
+                            directionY = 0;
+                        }
+                        break;
                 }
             });
 
+            // Event listeners for touch controls
+            document.getElementById('up-button').addEventListener('click', function () {
+                if (directionY !== snakeSpeed) {
+                    directionX = 0;
+                    directionY = -snakeSpeed;
+                }
+            });
+
+            document.getElementById('down-button').addEventListener('click', function () {
+                if (directionY !== -snakeSpeed) {
+                    directionX = 0;
+                    directionY = snakeSpeed;
+                }
+            });
+
+            document.getElementById('left-button').addEventListener('click', function () {
+                if (directionX !== snakeSpeed) {
+                    directionX = -snakeSpeed;
+                    directionY = 0;
+                }
+            });
+
+            document.getElementById('right-button').addEventListener('click', function () {
+                if (directionX !== -snakeSpeed) {
+                    directionX = snakeSpeed;
+                    directionY = 0;
+                }
+            });
+
+            // Event listener for start button
+            startButton.addEventListener('click', function () {
+                welcomePopup.style.display = 'none';
+                gameContainer.style.display = 'block';
+                resetGame();
+            });
         });
     </script>
 </body>
 </html>
+
+                }
+           
